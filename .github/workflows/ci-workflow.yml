@@ -1,0 +1,48 @@
+name: Clean Sweep CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up JDK 19
+      - name: Set up JDK 19
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '19'
+
+      # Cache Maven dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # Install dependencies and build the project
+      - name: Build project
+        run: mvn clean install --batch-mode --no-transfer-progress
+
+      # Run unit tests
+      - name: Run unit tests
+        run: mvn test --batch-mode --no-transfer-progress
+
+      # Run JavaFX application tests (if applicable)
+      - name: Run JavaFX tests
+        run: xvfb-run mvn test --batch-mode --no-transfer-progress
+
+  # Optional deployment step if needed later
